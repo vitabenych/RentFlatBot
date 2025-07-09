@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import asyncpg
+from api.routes import router
 import os
 from pydantic import BaseModel
 from typing import List, Optional
@@ -13,7 +14,10 @@ load_dotenv()  # Завантажує змінні з .env
 app = FastAPI()
 
 # Ініціалізація OpenAI-клієнта з ключем з .env
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", "тут_твій_ключ_якщо_немає_в_середовищі"))
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
+
+app.include_router(router, prefix="/api")
 
 # Змінна підключення до БД
 DATABASE_URL = os.getenv(
@@ -74,7 +78,7 @@ async def add_listing(apartment: Apartment):
             raise HTTPException(status_code=409, detail="Duplicate listing detected")
         return {"id": result["id"], "message": "Listing added successfully"}
 
-# Функція для парсингу оголошення через OpenAI
+# ✅ Функція для парсингу оголошення через OpenAI (оновлений синтаксис)
 async def parse_listing_with_ai(text: str) -> dict:
     prompt = f"""
     Витягни з тексту оголошення про квартиру такі поля у форматі JSON:
@@ -90,15 +94,16 @@ async def parse_listing_with_ai(text: str) -> dict:
     Відповідь тільки у форматі JSON.
     """
 
-    response = await client.chat.completions.acreate(
-        model="gpt-4o-mini",
+    response = await client.chat.completions.create(
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "Ти помічник, який витягує дані з оголошень про квартири."},
             {"role": "user", "content": prompt}
         ],
         temperature=0,
-        max_tokens=300,
+        max_tokens=400,
     )
+
     result = response.choices[0].message.content.strip()
 
     try:
