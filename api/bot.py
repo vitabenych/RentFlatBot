@@ -1,7 +1,12 @@
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
+from telegram.ext import (
+    ApplicationBuilder, CommandHandler, ContextTypes,
+    CallbackQueryHandler, MessageHandler, filters
+)
+from api.actions import parse_and_save_listing  
 
-TOKEN = "7894093358:AAFb4qocEJfbaVpRg36v09SZGhLJRkhWxEA"
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Вітальний текст
 WELCOME_MESSAGE = (
@@ -37,12 +42,12 @@ def edit_menu():
         [InlineKeyboardButton("🔙 Назад", callback_data="main_menu")]
     ])
 
-# Стартова команда
+# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     await update.message.reply_text(WELCOME_MESSAGE, parse_mode="Markdown", reply_markup=main_menu())
 
-# Обробка кнопок
+# Обробка натискань кнопок
 async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -83,7 +88,11 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Оберіть житловий комплекс:", reply_markup=keyboard)
 
     elif query.data.startswith("district_"):
-        selected = query.data.replace("district_", "").capitalize()
+        selected = query.data.replace("district_", "")
+        if selected == "all":
+            selected = "Все місто"
+        else:
+            selected = selected.capitalize()
         context.user_data["district"] = selected
         context.user_data.pop("complex", None)
         await query.edit_message_text(
@@ -158,7 +167,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "main_menu":
         await query.edit_message_text("🔽 Обери опції нижче:", reply_markup=main_menu())
 
-# Обробка повідомлень з бюджетом
+# Обробка текстових повідомлень (зокрема бюджету та оголошень)
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("awaiting_budget"):
         try:
@@ -197,9 +206,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="Markdown"
             )
     else:
-        await update.message.reply_text("🤖 Напишіть /start для початку або скористайтесь кнопками.")
+    
+        text = update.message.text
+        await parse_and_save_listing(text)
+        await update.message.reply_text("Дякую! Оголошення отримано і оброблено.")
 
-# Головна функція
+
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
 

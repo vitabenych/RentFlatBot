@@ -1,19 +1,35 @@
-from fastapi import APIRouter, HTTPException
+# routes.py
+from typing import Optional, List
+from fastapi import APIRouter
 from pydantic import BaseModel
-from api.actions import parse_and_save_listing
 
 router = APIRouter()
 
-@router.get("/")
-async def root():
-    return {"message": "Hello from RentFlatBot"}
+class Flat(BaseModel):
+    id: int
+    district: str
+    rooms: str
+    price: int
+    description: str
+    url: str
 
-class ListingText(BaseModel):
-    text: str
-
-@router.post("/parse_listing/")
-async def parse_listing_endpoint(listing: ListingText):
-    response = await parse_and_save_listing(listing.text)
-    if "error" in response:
-        raise HTTPException(status_code=400, detail=response["error"])
-    return response
+@router.get("/flats/", response_model=List[Flat])
+async def get_flats(
+    district: Optional[str] = None,
+    complex: Optional[str] = None,
+    rooms: Optional[str] = None,
+    min_price: Optional[int] = None,
+    max_price: Optional[int] = None,
+):
+    # Тут логіка вибору квартир із бази чи кешу
+    flats = [
+        Flat(
+            id=1,
+            district=district or "Сихівський",
+            rooms=rooms or "2",
+            price=12000,
+            description="Сучасна квартира в центрі Львова",
+            url="https://t.me/example_flat1"
+        )
+    ]
+    return flats

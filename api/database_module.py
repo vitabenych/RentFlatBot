@@ -1,10 +1,9 @@
 import asyncpg
+from dotenv import load_dotenv
 import os
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://rentuser:010505@localhost:5432/rentflatdb"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+load_dotenv() 
 
 db_pool = None
 
@@ -16,7 +15,7 @@ async def close_db():
     if db_pool:
         await db_pool.close()
 
-async def add_listing_to_db(apartment_data: dict):
+async def add_listing_to_db(listing: dict):
     query = """
         INSERT INTO apartments (text, price, district, area, photos, contacts, date)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -26,12 +25,12 @@ async def add_listing_to_db(apartment_data: dict):
     async with db_pool.acquire() as conn:
         result = await conn.fetchrow(
             query,
-            apartment_data.get("text"),
-            apartment_data.get("price"),
-            apartment_data.get("district"),
-            apartment_data.get("area"),
-            apartment_data.get("photos"),
-            apartment_data.get("contacts"),
-            apartment_data.get("date"),
+            listing.get("text"),
+            listing.get("price"),
+            listing.get("district"),
+            listing.get("area"),
+            listing.get("photos"),
+            listing.get("contacts"),
+            listing.get("date"),
         )
         return result

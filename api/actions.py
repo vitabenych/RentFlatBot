@@ -10,7 +10,7 @@ async def add_listing(apartment_data: dict):
 async def parse_and_save_listing(text: str):
     try:
         parsed_data = await parse_listing_with_ai(text)
-        parsed_data["text"] = text  # зберігаємо оригінальний текст
+        parsed_data["text"] = text 
         await add_listing_to_db(parsed_data)
         print("✅ Збережено в базу даних")
     except Exception as e:

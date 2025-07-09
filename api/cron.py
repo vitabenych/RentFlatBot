@@ -1,7 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 async def dummy_check_channels():
-    print("Перевіряю канали... (сюди підключиш Telethon пізніше)")
+    print("Перевіряю канали... (сюди підключу Telethon пізніше)")
 
 def start_scheduler():
     scheduler = AsyncIOScheduler()
